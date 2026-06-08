@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="refresh" content="30">
+<title>Classements — Olympiades Paul Langevin</title>
+<style>
+  :root {
+    --bleu:#1565C0;--bleu-clair:#1976D2;--bleu-fonce:#0D47A1;--bleu-bg:#E3F2FD;
+    --vert:#2E7D32;--rouge:#C62828;--or:#F9A825;--or-bg:#FFF8E1;
+    --argent:#78909C;--bronze:#6D4C41;
+    --bg:#F0F4F8;--card:#fff;--texte:#1A202C;--texte-doux:#4A5568;
+    --ombre:0 4px 20px rgba(0,0,0,.10);--radius:16px;--radius-sm:10px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--texte);min-height:100vh}
+
+  /* HEADER */
+  header{background:linear-gradient(135deg,var(--bleu-fonce),var(--bleu-clair));color:white;padding:24px 20px 20px;text-align:center;position:relative}
+  header h1{font-size:1.7rem;font-weight:900;letter-spacing:1px;margin-bottom:4px}
+  header p{font-size:.85rem;opacity:.8}
+  .sync-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.15);border-radius:20px;padding:5px 14px;font-size:.75rem;margin-top:10px}
+  .sync-dot{width:8px;height:8px;border-radius:50%;background:#9E9E9E}
+  .sync-dot.ok{background:#4CAF50;box-shadow:0 0 6px rgba(76,175,80,.8)}
+  .sync-dot.error{background:var(--rouge)}
+  .sync-dot.syncing{background:var(--or);animation:pulse 1s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+  /* REFRESH */
+  .refresh-bar{background:rgba(255,255,255,.1);height:3px;position:relative;overflow:hidden;margin-top:12px}
+  .refresh-progress{height:100%;background:rgba(255,255,255,.5);width:0;animation:refill 30s linear infinite}
+  @keyframes refill{0%{width:0}100%{width:100%}}
+
+  /* CONFIG */
+  .config-banner{background:#FFF3E0;border-bottom:3px solid var(--or);padding:20px;text-align:center}
+  .config-banner h2{color:#E65100;font-size:1rem;margin-bottom:8px}
+  .config-banner p{font-size:.85rem;color:var(--texte-doux);margin-bottom:12px;line-height:1.5}
+  .config-input{width:100%;max-width:500px;padding:10px 14px;border:2px solid #FFB74D;border-radius:8px;font-size:.9rem;font-family:inherit;margin-bottom:10px}
+  .config-input:focus{outline:none;border-color:var(--or)}
+  .config-btn{background:var(--or);color:white;border:none;padding:10px 22px;border-radius:8px;font-size:.9rem;font-weight:800;cursor:pointer;font-family:inherit}
+  .config-btn:hover{background:#F57F17}
+
+  /* MAIN */
+  main{max-width:900px;margin:0 auto;padding:24px 16px 40px}
+
+  /* ONGLETS NIVEAU */
+  .niveau-tabs{display:flex;gap:8px;margin-bottom:20px}
+  .niveau-tab{flex:1;padding:12px;border:2px solid #E2E8F0;border-radius:var(--radius-sm);background:white;font-family:inherit;font-weight:800;font-size:.95rem;cursor:pointer;transition:all .18s;text-align:center;color:var(--texte-doux);box-shadow:var(--ombre)}
+  .niveau-tab.active{border-color:var(--bleu);background:var(--bleu-bg);color:var(--bleu-fonce)}
+
+  /* PODIUM VISUEL */
+  .podium-section{background:var(--card);border-radius:var(--radius);box-shadow:var(--ombre);padding:24px 20px 20px;margin-bottom:20px}
+  .podium-section h2{font-size:1.1rem;font-weight:800;color:var(--bleu-fonce);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+  .podium-container{display:flex;align-items:flex-end;justify-content:center;gap:10px;height:200px;margin-bottom:20px}
+  .podium-place{flex:1;max-width:150px;display:flex;flex-direction:column;align-items:center;gap:6px}
+  .podium-name{font-size:.9rem;font-weight:900;text-align:center;color:var(--texte)}
+  .podium-info{font-size:.72rem;color:var(--texte-doux);text-align:center;line-height:1.4}
+  .podium-block{width:100%;display:flex;align-items:center;justify-content:center;border-radius:var(--radius-sm) var(--radius-sm) 0 0;font-size:2.2rem}
+  .podium-p1 .podium-block{height:120px;background:linear-gradient(180deg,#FFE082,#F9A825)}
+  .podium-p2 .podium-block{height:88px;background:linear-gradient(180deg,#ECEFF1,#90A4AE)}
+  .podium-p3 .podium-block{height:65px;background:linear-gradient(180deg,#D7CCC8,#8D6E63)}
+
+  /* TABLEAU CLASSEMENT */
+  .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--ombre);padding:20px;margin-bottom:20px}
+  .card h2{font-size:1rem;font-weight:800;color:var(--bleu-fonce);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  .table-wrap{overflow-x:auto;border-radius:var(--radius-sm)}
+  table{width:100%;border-collapse:collapse;min-width:320px}
+  th{background:var(--bleu-fonce);color:white;padding:11px 14px;font-size:.82rem;font-weight:800;text-align:left}
+  td{padding:11px 14px;font-size:.9rem;border-bottom:1px solid #EDF2F7;vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  tr:nth-child(even) td{background:#F7FAFC}
+  tr:hover td{background:var(--bleu-bg);transition:background .15s}
+
+  /* RANG */
+  .rang-badge{width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:900;font-size:.9rem;flex-shrink:0}
+  .rang-1{background:var(--or);color:white;box-shadow:0 2px 8px rgba(249,168,37,.4)}
+  .rang-2{background:var(--argent);color:white}
+  .rang-3{background:var(--bronze);color:white}
+  .rang-autre{background:#EDF2F7;color:var(--texte-doux)}
+
+  /* BADGES */
+  .badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:800}
+  .badge-bleu{background:var(--bleu-bg);color:var(--bleu-fonce)}
+  .badge-vert{background:#E8F5E9;color:var(--vert)}
+
+  /* ACCORDION ÉPREUVES */
+  .accordion-item{background:white;border-radius:var(--radius-sm);margin-bottom:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+  .accordion-header{display:flex;align-items:center;padding:13px 16px;cursor:pointer;gap:10px;border:none;background:none;width:100%;font-family:inherit;text-align:left;transition:background .15s}
+  .accordion-header:hover{background:#F7FAFC}
+  .accordion-ep{font-size:.95rem;font-weight:800;color:var(--texte);flex:1}
+  .accordion-sub{font-size:.75rem;color:var(--texte-doux)}
+  .accordion-chevron{font-size:.75rem;color:var(--texte-doux);transition:transform .2s;flex-shrink:0}
+  .accordion-item.open .accordion-chevron{transform:rotate(180deg)}
+  .accordion-body{display:none;padding:0 16px 16px}
+  .accordion-item.open .accordion-body{display:block}
+
+  /* MINI STATS */
+  .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+  .stat-card{background:var(--card);border-radius:var(--radius-sm);padding:14px;text-align:center;box-shadow:var(--ombre)}
+  .stat-val{font-size:1.8rem;font-weight:900;color:var(--bleu);line-height:1}
+  .stat-label{font-size:.7rem;color:var(--texte-doux);margin-top:3px;font-weight:700}
+
+  /* EMPTY */
+  .empty{text-align:center;padding:40px 20px;color:var(--texte-doux)}
+  .empty .e-icon{font-size:3rem;margin-bottom:10px}
+  .empty p{font-size:.9rem}
+
+  /* LOADING */
+  .loading{text-align:center;padding:60px 20px;color:var(--texte-doux)}
+  .spinner{width:40px;height:40px;border:4px solid var(--bleu-bg);border-top-color:var(--bleu);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* FOOTER */
+  footer{text-align:center;padding:20px;font-size:.75rem;color:var(--texte-doux);border-top:1px solid #EDF2F7;margin-top:10px}
+
+  /* ALERTE */
+  #alerte{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--vert);color:white;padding:10px 22px;border-radius:30px;font-weight:800;font-size:.85rem;z-index:999;transition:transform .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;white-space:nowrap}
+  #alerte.show{transform:translateX(-50%) translateY(0)}
+
+  @media(max-width:500px){
+    .stats-grid{grid-template-columns:1fr 1fr}
+    header h1{font-size:1.3rem}
+    .podium-container{height:160px}
+    .podium-p1 .podium-block{height:95px}
+    .podium-p2 .podium-block{height:70px}
+    .podium-p3 .podium-block{height:52px}
+  }
+</style>
+</head>
+<body>
+
+<div id="alerte"></div>
+
+<header>
+  <div style="font-size:2.5rem;margin-bottom:6px">🏆</div>
+  <h1>Olympiades Paul Langevin</h1>
+  <p>Classements en direct · Saison 2025-2026</p>
+  <div class="sync-pill">
+    <div class="sync-dot syncing" id="sync-dot"></div>
+    <span id="sync-text">Connexion…</span>
+  </div>
+  <div class="refresh-bar"><div class="refresh-progress" id="refresh-progress"></div></div>
+</header>
+
+<!-- CONFIG (masqué si URL déjà enregistrée) -->
+<div id="config-banner" class="config-banner" style="display:none">
+  <h2>⚙️ Configuration requise</h2>
+  <p>Entrez l'URL du script Google Apps Script pour afficher les classements en direct.<br>
+  Cette URL vous a été fournie lors de la configuration de l'application principale.</p>
+  <input type="url" class="config-input" id="config-url-input" placeholder="https://script.google.com/macros/s/.../exec"><br>
+  <button class="config-btn" onclick="saveConfigUrl()">💾 Connecter</button>
+</div>
+
+<main id="main-content">
+  <div class="loading" id="loading-screen">
+    <div class="spinner"></div>
+    <p>Chargement des classements…</p>
+  </div>
+
+  <div id="app-content" style="display:none">
+
+    <!-- MINI STATS -->
+    <div class="stats-grid" id="stats-grid"></div>
+
+    <!-- ONGLETS NIVEAU -->
+    <div class="niveau-tabs">
+      <button class="niveau-tab active" onclick="setNiveau('6e/5e',this)">🎓 6e / 5e</button>
+      <button class="niveau-tab" onclick="setNiveau('4e/3e',this)">🎓 4e / 3e</button>
+    </div>
+
+    <!-- PODIUM GÉNÉRAL -->
+    <div class="podium-section">
+      <h2>🥇 Podium Général</h2>
+      <div id="podium-general"></div>
+    </div>
+
+    <!-- CLASSEMENT GÉNÉRAL -->
+    <div class="card">
+      <h2>📊 Classement complet</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Rang</th><th>Classe</th><th>Points</th><th>Participation</th><th>Épreuves</th></tr></thead>
+          <tbody id="classement-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PODIUMS PAR ÉPREUVE -->
+    <div class="card">
+      <h2>⚡ Classements par épreuve</h2>
+      <div id="epreuves-accordions"></div>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  🏫 Collège Paul Langevin &nbsp;·&nbsp; Mise à jour automatique toutes les 30 secondes &nbsp;·&nbsp;
+  <span id="last-update-footer">—</span>
+</footer>
+
+<script>
+const EPREUVES=[
+  {id:'ENDURANCE', nom:'Endurance',      icon:'🏃'},
+  {id:'VITESSE',   nom:'Vitesse',         icon:'⚡'},
+  {id:'JAVELOT',   nom:'Lancer javelot',  icon:'🎯'},
+  {id:'POIDS',     nom:'Lancer poids',    icon:'⚾'},
+  {id:'HAUTEUR',   nom:'Saut hauteur',    icon:'🔝'},
+  {id:'LONGUEUR',  nom:'Saut longueur',   icon:'📏'},
+  {id:'BASKET',    nom:'Basket',          icon:'🏀'},
+  {id:'FOOTBALL',  nom:'Football',        icon:'⚽'},
+  {id:'ULTIMATE',  nom:'Ultimate',        icon:'🥏'},
+  {id:'BADMINTON', nom:'Badminton',       icon:'🏸'},
+  {id:'TT',        nom:'Tennis de table', icon:'🏓'},
+  {id:'GYMNAS',    nom:'Gymnastique',     icon:'🤸'},
+  {id:'ACROSPORT', nom:'Acrosport',       icon:'🫂'},
+  {id:'ESCALADE',  nom:'Escalade',        icon:'🧗'},
+];
+
+const LS_URL = 'olympiades_script_url';
+let scriptUrl = localStorage.getItem(LS_URL) || '';
+// Tenter aussi l'URL passée en paramètre GET : ?url=https://...
+const urlParams = new URLSearchParams(window.location.search);
+if(urlParams.get('url')) { scriptUrl = urlParams.get('url'); localStorage.setItem(LS_URL, scriptUrl); }
+
+let appData = { classes:{} };
+let currentNiveau = '6e/5e';
+let jsonpN = 0;
+
+// ============================================================
+// JSONP
+// ============================================================
+function jsonpCall(url, cb){
+  const name = '__cls_cb_'+(++jsonpN);
+  const sc = document.createElement('script');
+  const t = setTimeout(()=>{ delete window[name]; sc.remove(); cb(null,new Error('Timeout')); },12000);
+  window[name]=function(d){ clearTimeout(t); delete window[name]; sc.remove(); cb(d,null); };
+  sc.src = url+(url.includes('?')?'&':'?')+'callback='+name+'&_t='+Date.now();
+  document.head.appendChild(sc);
+}
+
+function setSyncStatus(s){
+  const dot=document.getElementById('sync-dot');
+  const txt=document.getElementById('sync-text');
+  dot.className='sync-dot '+s;
+  txt.textContent = s==='ok'?'En direct · '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})
+    :s==='error'?'Erreur de connexion'
+    :s==='syncing'?'Synchronisation…':'Non configuré';
+  document.getElementById('last-update-footer').textContent =
+    s==='ok'?'Dernière mise à jour : '+new Date().toLocaleTimeString('fr-FR'):'—';
+}
+
+function fetchData(){
+  if(!scriptUrl){ setSyncStatus('nocfg'); return; }
+  setSyncStatus('syncing');
+  jsonpCall(scriptUrl+'?action=read', (data,err)=>{
+    document.getElementById('loading-screen').style.display='none';
+    if(err||!data||data.error){ setSyncStatus('error'); showEmpty(); return; }
+    appData = data.classes ? data : {classes:{}};
+    setSyncStatus('ok');
+    renderAll();
+  });
+}
+
+// ============================================================
+// CALCULS
+// ============================================================
+function calcScore(classe,epId){
+  const c=appData.classes[classe]; if(!c)return null;
+  const res=c.resultats?.[epId]||{};
+  const scores=Object.values(res).map(Number).filter(v=>!isNaN(v));
+  if(!scores.length)return null;
+  const moy=scores.reduce((s,v)=>s+v,0)/scores.length;
+  const eff=c.eleves.length||1;
+  const taux=scores.length/eff;
+  return{moy,taux,scoreFinal:moy*(1+0.15*taux),participants:scores.length,effectif:eff};
+}
+
+function calcEpreuve(epId,niv){
+  return Object.keys(appData.classes).filter(c=>appData.classes[c].niveau===niv)
+    .map(c=>{const r=calcScore(c,epId);return r?{classe:c,...r}:null;})
+    .filter(Boolean).sort((a,b)=>b.scoreFinal-a.scoreFinal);
+}
+
+function calcGeneral(niv){
+  const classes=Object.keys(appData.classes).filter(c=>appData.classes[c].niveau===niv);
+  const pts={},ts={},ec={};
+  classes.forEach(c=>{pts[c]=0;ts[c]=0;ec[c]=0;});
+  EPREUVES.forEach(ep=>{
+    calcEpreuve(ep.id,niv).forEach((item,i)=>{pts[item.classe]+=(100-i);ts[item.classe]+=item.taux;ec[item.classe]++;});
+  });
+  return classes.map(c=>({classe:c,points:pts[c],tauxMoyen:ec[c]>0?ts[c]/ec[c]:0,epCount:ec[c]}))
+    .sort((a,b)=>b.points!==a.points?b.points-a.points:b.tauxMoyen!==a.tauxMoyen?b.tauxMoyen-a.tauxMoyen:b.epCount-a.epCount);
+}
+
+// ============================================================
+// RENDU
+// ============================================================
+function setNiveau(niv,btn){
+  currentNiveau=niv;
+  document.querySelectorAll('.niveau-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAll();
+}
+
+function renderAll(){
+  document.getElementById('app-content').style.display='block';
+  renderStats();
+  renderPodium();
+  renderClassement();
+  renderEpreuves();
+}
+
+function renderStats(){
+  const classes=Object.keys(appData.classes);
+  const elv=classes.reduce((s,c)=>s+(appData.classes[c].eleves||[]).length,0);
+  let sc=0;classes.forEach(c=>Object.values(appData.classes[c].resultats||{}).forEach(e=>{sc+=Object.keys(e).length;}));
+  document.getElementById('stats-grid').innerHTML=`
+    <div class="stat-card"><div class="stat-val">${classes.length}</div><div class="stat-label">Classes</div></div>
+    <div class="stat-card"><div class="stat-val">${elv}</div><div class="stat-label">Élèves inscrits</div></div>
+    <div class="stat-card"><div class="stat-val">${sc}</div><div class="stat-label">Scores enregistrés</div></div>`;
+}
+
+function renderPodium(){
+  const results=calcGeneral(currentNiveau);
+  const el=document.getElementById('podium-general');
+  if(results.length<1){el.innerHTML='<div class="empty"><div class="e-icon">🏆</div><p>Aucune donnée pour ce niveau.</p></div>';return;}
+  const top3=[...results.slice(0,3)];while(top3.length<3)top3.push(null);
+  const order=[top3[1],top3[0],top3[2]];
+  const pcs=['podium-p2','podium-p1','podium-p3'];
+  const emojis=['🥈','🥇','🥉'];
+  let html='<div class="podium-container">';
+  order.forEach((r,i)=>{
+    html+=`<div class="podium-place ${pcs[i]}">`;
+    if(r){html+=`<div class="podium-name">${r.classe}</div><div class="podium-info">${r.points} pts<br>${Math.round(r.tauxMoyen*100)}% part.</div>`;}
+    else html+=`<div class="podium-name" style="color:#ccc">—</div>`;
+    html+=`<div class="podium-block">${emojis[i]}</div></div>`;
+  });
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+function renderClassement(){
+  const results=calcGeneral(currentNiveau);
+  const tbody=document.getElementById('classement-tbody');
+  if(!results.length){tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--texte-doux)">Aucune donnée.</td></tr>';return;}
+  const medals=['🥇','🥈','🥉'];
+  tbody.innerHTML=results.map((r,i)=>{
+    const cls=i<3?'rang-'+(i+1):'rang-autre';
+    const bar=r.epCount>0?Math.round((r.epCount/EPREUVES.length)*100):0;
+    return`<tr>
+      <td><div class="rang-badge ${cls}">${medals[i]||i+1}</div></td>
+      <td><strong style="font-size:1rem">${r.classe}</strong></td>
+      <td><span class="badge badge-bleu">${r.points} pts</span></td>
+      <td>${Math.round(r.tauxMoyen*100)}%</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;height:6px;background:#EDF2F7;border-radius:3px;overflow:hidden">
+            <div style="width:${bar}%;height:100%;background:var(--bleu);border-radius:3px"></div>
+          </div>
+          <span style="font-size:.78rem;color:var(--texte-doux);white-space:nowrap">${r.epCount}/${EPREUVES.length}</span>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderEpreuves(){
+  const el=document.getElementById('epreuves-accordions');
+  el.innerHTML='';
+  EPREUVES.forEach(ep=>{
+    const cl=calcEpreuve(ep.id,currentNiveau);
+    const div=document.createElement('div');
+    div.className='accordion-item';
+    div.id='acc-'+ep.id;
+    const medals=['🥇','🥈','🥉'];
+    const top=cl[0]?`<span class="badge badge-vert">${medals[0]} ${cl[0].classe}</span>`:'<span style="font-size:.75rem;color:var(--texte-doux)">Pas encore joué</span>';
+    let bodyHtml='';
+    if(!cl.length){bodyHtml='<p style="color:var(--texte-doux);font-size:.85rem;padding-top:4px">Aucune donnée pour cette épreuve.</p>';}
+    else{
+      bodyHtml='<div style="overflow-x:auto;border-radius:8px"><table style="min-width:280px"><thead><tr><th>Rang</th><th>Classe</th><th>Moyenne</th><th>Participation</th><th>Score final</th></tr></thead><tbody>';
+      cl.forEach((r,i)=>{
+        const bg=i===0?'background:#FFFDE7':i===1?'background:#F5F5F5':i===2?'background:#FBE9E7':'';
+        bodyHtml+=`<tr style="${bg}"><td>${medals[i]||i+1}</td><td><strong>${r.classe}</strong></td><td>${r.moy.toFixed(2)}</td><td>${Math.round(r.taux*100)}%</td><td><strong>${r.scoreFinal.toFixed(2)}</strong></td></tr>`;
+      });
+      bodyHtml+='</tbody></table></div>';
+    }
+    div.innerHTML=`
+      <button class="accordion-header" onclick="toggleAcc('acc-${ep.id}')">
+        <span style="font-size:1.4rem">${ep.icon}</span>
+        <span class="accordion-ep">${ep.nom}</span>
+        <span class="accordion-sub">${top}</span>
+        <span class="accordion-chevron">▼</span>
+      </button>
+      <div class="accordion-body">${bodyHtml}</div>`;
+    el.appendChild(div);
+  });
+}
+
+function toggleAcc(id){document.getElementById(id).classList.toggle('open')}
+
+function showEmpty(){
+  document.getElementById('app-content').style.display='block';
+  document.getElementById('stats-grid').innerHTML='';
+  document.getElementById('podium-general').innerHTML='<div class="empty"><div class="e-icon">📡</div><p>Impossible de charger les données.<br>Vérifiez la connexion ou l\'URL du script.</p></div>';
+  document.getElementById('classement-tbody').innerHTML='';
+  document.getElementById('epreuves-accordions').innerHTML='';
+}
+
+// ============================================================
+// CONFIG URL
+// ============================================================
+function saveConfigUrl(){
+  const url=document.getElementById('config-url-input').value.trim();
+  if(!url||!url.startsWith('http')){showAlerte('URL invalide');return;}
+  scriptUrl=url;localStorage.setItem(LS_URL,url);
+  document.getElementById('config-banner').style.display='none';
+  fetchData();startAutoRefresh();
+}
+
+// ============================================================
+// ALERTE
+// ============================================================
+function showAlerte(msg){
+  const el=document.getElementById('alerte');
+  el.textContent=msg;el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),3000);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function startAutoRefresh(){
+  setInterval(()=>{
+    document.getElementById('refresh-progress').style.animation='none';
+    void document.getElementById('refresh-progress').offsetHeight;
+    document.getElementById('refresh-progress').style.animation='refill 30s linear infinite';
+    fetchData();
+  },30000);
+}
+
+window.addEventListener('load',()=>{
+  if(!scriptUrl){
+    document.getElementById('config-banner').style.display='block';
+    document.getElementById('loading-screen').style.display='none';
+    setSyncStatus('nocfg');
+  }else{
+    fetchData();
+    startAutoRefresh();
+  }
+});
+</script>
+</body>
+</html>
